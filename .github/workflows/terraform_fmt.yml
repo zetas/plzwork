@@ -1,0 +1,35 @@
+name: Terraform Format
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tf_format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Terraform Format
+    outputs:
+      changes_detected: ${{ steps.commit.outputs.changes_detected }}
+    permissions:
+      # Allow GITHUB_TOKEN to commit back to PR branch
+      contents: write
+      pull-requests: read
+      actions: read
+      checks: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      - name: Terraform Format
+        run: |
+          terraform fmt -recursive -diff
+      - name: Commit Changes to PR
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'fix(#${{ github.event.pull_request.number }}): terraform formatting'
+          file_pattern: '*.tf **/*.tf'
+          status_options: '--untracked-files=no'
+          add_options: '-u'
